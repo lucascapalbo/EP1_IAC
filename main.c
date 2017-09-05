@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include "afd_util.c"
 
+int ** matrizEquivalencia;
 
 void imprime (tAFD * t){
     int i = 0;
@@ -39,21 +40,102 @@ void estadosInacessiveis(tAFD *afd,int q0)
         }
     }
 }
+
+void inicializaMatrizEquivalencia(int ** matrizEquivalencia, int * estados , tAFD * afd){
+    int i , j;
+    for (i = 0; i< afd->n; i++) {
+        for (j = 0; j < afd->n; j++) {
+            if(estados[i] == estados[j])
+                matrizEquivalencia[i][j] = 1;
+        }
+    }
+}
+
+void verificaSimbolo(int** matrizEquivalencia , tAFD * afd){
+    int i , j , z;
+    for (i = 0; i< afd->n; i++) {
+        for (j = 0; j < afd->n; j++) {
+            if(matrizEquivalencia[i][j] == 1){
+                for(z = 0; z < afd->s ; z++){
+                    if((afd->Delta[i][z] == -1 && afd->Delta[j][z] != -1) ||
+                       (afd->Delta[i][z] != -1 && afd->Delta[j][z] == -1))
+                        matrizEquivalencia[i][j] = 0;
+                }
+            }
+        }
+    }
+}
+
+void verificaTransicoes(int ** matrizEquivalencia , tAFD * afd){
+    int i , j , z;
+    for (i = 0; i< afd->n; i++) {
+        for (j = 0; j < afd->n; j++) {
+            if(matrizEquivalencia[i][j] == 1){
+                for(z = 0; z < afd->s ; z++){
+                    if(afd->F[afd->Delta[i][z]] != afd->F[afd->Delta[j][z]])
+                        //destinos nao possuem mesmo estado
+                        matrizEquivalencia[i][j] = 0;
+                }
+            }
+        }
+    }
+}
+int** identificaIdenticos(tAFD *afd){
+    int z = 0;
+    int ** matrizEquivalencia = (int**) calloc(afd->n, sizeof(int*));
+    for (z=0;z<afd->n; z++)
+        matrizEquivalencia [z]= (int*) calloc(afd->n, sizeof(int));
+    int i , j;
+    for (i = 0; i< afd->n; i++) {
+        for (j = 0; j < afd->n; j++) {
+            matrizEquivalencia[i][j] = 0;
+        }
+    }
+    inicializaMatrizEquivalencia(matrizEquivalencia, afd->F, afd); //se linha e coluna forem de mesmo estado, coloca 1. Usa F, que contem a categoria (aceitacao ou nao) de cada estado.
+    verificaSimbolo(matrizEquivalencia, afd); //verifica se a linha e coluna, de onde possuem 1, estao definidos para os mesmos simbolos. (se nao possuem -1 em algum lugar).
+    verificaTransicoes(matrizEquivalencia, afd);//verifica se a linha e coluna, que possuem 1, chegam em estados da mesma categoria.
+    // ################# SOH IMPRIME A MATRIZ PARA DEBUGAR #################################
+    for (i = 0; i< afd->n; i++) {
+        for (j = 0; j < afd->n; j++) {
+            printf("%i ", matrizEquivalencia[i][j]);
+        }
+        printf("\n");
+    }
+    // ################# SOH IMPRIME A MATRIZ PARA DEBUGAR #################################
+    return matrizEquivalencia;
+}
+
+int * verificaRepresentante(tAFD *afd){
+    int i , j ;
+    int * representante = (int*) calloc(afd->n, sizeof(int));
+    for (i=0; i<afd->n; i++) representante[i] = -1;
+    int contador = 0; //contador que representa a classe.
+    //soma 1 a cada vez que passa por um estado. se houver algum estado equivalente coloca mesmo contador.
+    for (i=0; i<afd->n; i++){
+        if(representante[i] == -1){
+            representante[i] = contador;
+            for (j = 0; j < afd->n; j++) {
+                if (matrizEquivalencia[i][j] == 1) {
+                    representante[j] = contador;
+                }
+            }
+            contador++;
+        }
+    }
+    return representante;
+}
 int main(int argc, const char * argv[]) {
     // insert code here...
     tAFD t;
     if(LeAFDTXT("/Users/lucasbordinhoncapalbo/Documents/EP1_IAC/EP1_IAC/grafo.txt", &t) == 1){
         // imprime(&t);
         estadosInacessiveis(&t, t.q0);
-        int i = 0;
-        for (i = 0; i < t.n; i++){
-            if(t.inacessivel[i] == 1)
-                printf("Estado %i eh inacessivel \n",(i+1));
-        }
+        matrizEquivalencia =   identificaIdenticos(&t);
+        int * representante = verificaRepresentante(&t);
         /*
          1 -busca estados inacessiveis (busca em largura ou profundidade) -- feito.
          2 - remove estados inuteis.
-         3 - identifica automatos identicos{
+         3 - identifica automatos identicos{ -- FEITO
          - divide em subconjuntos ( aceitacao e nao aceitacao)
          - verificar equivalencia dentro de cada conjunto{
          PREENCHER MATRIZ BINARIA
@@ -71,6 +153,23 @@ int main(int argc, const char * argv[]) {
          se houver algum estado equivalente ao i ( soh olhar na matriz binaria, e se tiver 1 tem), coloca mesmo Contador para ele.
          }
          5 - cria o automato minimo usando vetor de representante e a matriz de equivalencia (vou perguntar ao prof pois nao entendi direito)
+         
+         ######################### DEBUG #######################
+         int i = 0;
+         for (i = 0; i < t.n; i++){
+         if(t.inacessivel[i] == 1)
+         printf("Estado %i eh inacessivel \n",(i+1));
+         }
+         
+         -------------------
+         PRINTA REPRESENTANTE
+         
+         int i = 0;
+         for (i = 0 ; i < t.n; i++) {
+         printf("%i ",representante[i]);
+         }
+         
+         ######################### DEBUG #######################
          */
         //  EscreveAFDJFF("/Users/lucasbordinhoncapalbo/Documents/EP1_IAC/EP1_IAC/afd7.jff", &t);
     }
