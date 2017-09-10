@@ -21,6 +21,15 @@ void imprime (tAFD * t){
         printf("\n");
     }
 }
+
+void buscaProfundidade(){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
+    
+}
+
+void estadosInuteis() {
+    //ve os slides pra entender
+}
+
 void estadosInacessiveis(tAFD *afd,int q0)
 {
     int visitado[afd->n];
