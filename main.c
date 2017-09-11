@@ -11,10 +11,10 @@
 
 int ** matrizEquivalencia;
 
-void inicializaInacessiveis(int* inacessiveis, tAFD * afd) {
+void inicializaInacessiveis(tAFD * afd) {
     int i;
     for(i=0;i<afd->n; i++)
-        inacessiveis[i] = 1; //setta tudo como inacessiveis pra depois rodar a dfs
+        afd->inacessiveis[i] = 1; //setta tudo como inacessiveis pra depois rodar a dfs
 }
 
 void imprime (tAFD * t){
@@ -28,10 +28,10 @@ void imprime (tAFD * t){
     }
 }
 
-void buscaProfundidade(tAFD *afd, int i, int* inacessiveis){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
+void buscaProfundidade(tAFD *afd, int i){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
     int** matriz = afd->Delta;
     int visited[afd->n];
-    inacessiveis[i] = 0;
+    afd->inacessiveis[i] = 0;
 
     int j;
     printf("\n%d",i);
@@ -39,15 +39,15 @@ void buscaProfundidade(tAFD *afd, int i, int* inacessiveis){ //FAZ ESSE, OU POR 
 
     for(j=0;j<afd->n;j++)
        if(!visited[j]&&afd->Delta[i][j]==1)
-            buscaProfundidade(afd, j, inacessiveis);
+            buscaProfundidade(afd, j);
 }
 
-void estadosInacessiveis(int* inacessiveis, tAFD* afd) {
-    inicializaInacessiveis(inacessiveis, afd);
-    buscaProfundidade(afd, afd->q0, inacessiveis);
+void estadosInacessiveis(tAFD* afd) {
+    inicializaInacessiveis(afd);
+    buscaProfundidade(afd, afd->q0);
     int k;
     for(k=0; k<afd->n; k++)
-        printf("%i ", inacessiveis[k]);
+        printf("%i - da posicao[%i]\n ", afd->inacessiveis[k], k);
     //ve os slides pra entender
 }
 
@@ -159,10 +159,9 @@ int * verificaRepresentante(tAFD *afd){
 int main(int argc, const char * argv[]) {
     // insert code here...
     tAFD t;
-    int* inacessiveis;
-    if(LeAFDTXT("/Users/lucasbordinhoncapalbo/Documents/EP1_IAC/EP1_IAC/grafo.txt", &t) == 1){
+    if(LeAFDTXT("/Users/Hozer/Desktop/ITC/EP1_IAC/grafo.txt", &t) == 1){
         // imprime(&t);
-        estadosInacessiveis(inacessiveis, &t);
+        estadosInacessiveis(&t);
         matrizEquivalencia =   identificaIdenticos(&t);
         int * representante = verificaRepresentante(&t);
         /*
