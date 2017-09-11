@@ -10,7 +10,6 @@
 #include "afd_util.c"
 
 int ** matrizEquivalencia;
-int[] inacessiveis;
 
 void inicializaInacessiveis(int* inacessiveis, tAFD * afd) {
     int i;
@@ -31,24 +30,24 @@ void imprime (tAFD * t){
 
 void buscaProfundidade(tAFD *afd, int i, int* inacessiveis){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
     int** matriz = afd->Delta;
-    int[afd->n] visited;
+    int visited[afd->n];
     inacessiveis[i] = 0;
 
     int j;
     printf("\n%d",i);
     visited[i]=1;
 
-    for(j=0;j<n;j++)
+    for(j=0;j<afd->n;j++)
        if(!visited[j]&&afd->Delta[i][j]==1)
-            DFS(j);
+            buscaProfundidade(afd, j, inacessiveis);
 }
 
 void estadosInacessiveis(int* inacessiveis, tAFD* afd) {
     inicializaInacessiveis(inacessiveis, afd);
-    buscaProfundidade(afd, 0, inacessiveis);
+    buscaProfundidade(afd, afd->q0, inacessiveis);
     int k;
     for(k=0; k<afd->n; k++)
-        printf("%i ", inacessiveis[i]);
+        printf("%i ", inacessiveis[k]);
     //ve os slides pra entender
 }
 
@@ -160,9 +159,10 @@ int * verificaRepresentante(tAFD *afd){
 int main(int argc, const char * argv[]) {
     // insert code here...
     tAFD t;
+    int* inacessiveis;
     if(LeAFDTXT("/Users/lucasbordinhoncapalbo/Documents/EP1_IAC/EP1_IAC/grafo.txt", &t) == 1){
         // imprime(&t);
-        estadosInacessiveis(&t, t.q0);
+        estadosInacessiveis(inacessiveis, &t);
         matrizEquivalencia =   identificaIdenticos(&t);
         int * representante = verificaRepresentante(&t);
         /*
