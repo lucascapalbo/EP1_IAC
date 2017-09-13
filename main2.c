@@ -22,32 +22,39 @@ void imprime (tAFD * t){
     int j = 0;
     for (i = 0; i< t->n; i++){
         for (j = 0; j< t->s; j++) {
-            printf("%i",t->Delta[i][j]);
+            printf("Delta[%i][%i]: %i", i, j, t->Delta[i][j]);
         }
         printf("\n");
     }
 }
 
-void buscaProfundidade(tAFD *afd, int i){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
+void buscaProfundidade(tAFD *afd, int i , int * visited){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
     int** matriz = afd->Delta;
-    int visited[afd->n];
     afd->inacessiveis[i] = 0;
-
     int j;
-    printf("\n%d",i);
+    printf("\n'i' da busca em prof: %i",i);
     visited[i]=1;
-
-    for(j=0;j<afd->n;j++)
-       if(!visited[j]&&afd->Delta[i][j]==1)
-            buscaProfundidade(afd, j);
+    int k;
+    for(j=0;j<afd->s;j++)
+       if(afd->Delta[i][j] != -1 && visited[afd->Delta[i][j]] == 0){ // TA CRASHANDO NESSA EXATA LINHA existe a seta e n foi visitado ainda.
+            buscaProfundidade(afd, afd ->Delta[i][j], visited);
+       } else printf("DELTA NAO É UMa cara\n");
 }
+//delta é linha: estado. coluna: símbolo. ou seja, [i][j] mostra pra onde vai com tal símbolo.
+// oque acha de fazer função que vai percorrer delta, e fazer uma nova matriz pra fazer um grafo mesmo? e nao esse grafo bugado que é o automato.
+// dai da pra usar o busca em profundidade da net.
 
 void estadosInacessiveis(tAFD* afd) {
     inicializaInacessiveis(afd);
-    buscaProfundidade(afd, afd->q0);
+    int visited[afd->n];
+    int i = 0;
+    for(i = 0 ; i < afd->n ; i++)
+        visited[i] = 0;
+    buscaProfundidade(afd, afd->q0, visited);
+        printf("\nN VALE: %i\n",afd->n);
     int k;
     for(k=0; k<afd->n; k++)
-        printf("%i - da posicao[%i]\n ", afd->inacessiveis[k], k);
+        printf("\n%i - da posicao[%i]\n ", afd->inacessiveis[k], k);
 }
 
 void estadosInuteis() {
