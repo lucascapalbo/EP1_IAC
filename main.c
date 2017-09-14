@@ -11,44 +11,72 @@
 
 int ** matrizEquivalencia;
 
+
+void inicializaInacessiveis(tAFD * afd) {
+    int i;
+    for(i=0;i<afd->n; i++)
+        afd->inacessivel[i] = 1; //setta tudo como inacessiveis pra depois rodar a dfs
+}
+
 void imprime (tAFD * t){
     int i = 0;
     int j = 0;
     for (i = 0; i< t->n; i++){
         for (j = 0; j< t->s; j++) {
-            printf("%i",t->Delta[i][j]);
+            printf("Delta[%i][%i]: %i", i, j, t->Delta[i][j]);
         }
         printf("\n");
     }
 }
 
-void buscaProfundidade(){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
-    
+void buscaProfundidade(tAFD *afd, int i , int * visited){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
+    afd->inacessivel[i] = 0;
+    int j;
+    visited[i]=1;
+    for(j=0;j<afd->s;j++)
+        if(afd->Delta[i][j] != -1 && visited[afd->Delta[i][j]] == 0){ // TA CRASHANDO NESSA EXATA LINHA existe a seta e n foi visitado ainda.
+            buscaProfundidade(afd, afd ->Delta[i][j], visited);
+        }
 }
+
 
 void estadosInuteis() {
     //ve os slides pra entender
 }
-void estadosInacessiveis(tAFD *afd,int q0)
-{
-    int visitado[afd->n];
-    visitado[q0] = 1; //estado inicial sempre eh visitado.
-    int i , j;
-    for (i = 0; i < afd->n; i++) {
-        for (j = 0; j < afd->s; j++) {
-            if(afd->Delta[i][j] != -1){
-                visitado[afd->Delta[i][j]] = 1;
-            }
-        }
-    }
-    int z = 0;
-    for (z = 0; z < afd->n; z++) {
-        if(visitado[z] != 1){
-            afd->inacessivel[z] = 1;
-        }
-    }
-}
 
+void estadosInacessiveis(tAFD* afd) {
+    inicializaInacessiveis(afd);
+    int visited[afd->n];
+    int i = 0;
+    for(i = 0 ; i < afd->n ; i++)
+        visited[i] = 0;
+    buscaProfundidade(afd, afd->q0, visited);
+    int k;
+    for(k=0; k<afd->n; k++)
+        printf("\n%i - da posicao[%i]\n ", afd->inacessivel[k], k);
+}
+/*
+ ANTIGO
+ void estadosInacessiveis(tAFD *afd,int q0)
+ {
+ int visitado[afd->n];
+ visitado[q0] = 1; //estado inicial sempre eh visitado.
+ int i , j;
+ for (i = 0; i < afd->n; i++) {
+ for (j = 0; j < afd->s; j++) {
+ if(afd->Delta[i][j] != -1){
+ visitado[afd->Delta[i][j]] = 1;
+ }
+ }
+ }
+ int z = 0;
+ for (z = 0; z < afd->n; z++) {
+ if(visitado[z] != 1){
+ afd->inacessivel[z] = 1;
+ }
+ }
+ }
+ */
 void inicializaMatrizEquivalencia(int ** matrizEquivalencia, int * estados , tAFD * afd){
     int i , j;
     for (i = 0; i< afd->n; i++) {
@@ -237,17 +265,18 @@ int main(int argc, const char * argv[]) {
     // insert code here...
     tAFD t;
     if(LeAFDTXT(argv[1], &t) == 1){
+        estadosInacessiveis(&t);
         // imprime(&t);
-        estadosInacessiveis(&t, t.q0);
-        matrizEquivalencia =  identificaIdenticos(&t);
-        int * representante = verificaRepresentante(&t);
-        tAFD minimo;
-        int nEstadosMin = 0;
-        nEstadosMin =  verificaNovosEstados(&t,representante);
-        InicializaAFD(&minimo, nEstadosMin, t.s);
-        criaAutMin(&minimo,representante, &t);
-        EscreveAFDJFF(argv[2], &minimo);
-        /*
+        /*estadosInacessiveis(&t, t.q0);
+         matrizEquivalencia =  identificaIdenticos(&t);
+         int * representante = verificaRepresentante(&t);
+         tAFD minimo;
+         int nEstadosMin = 0;
+         nEstadosMin =  verificaNovosEstados(&t,representante);
+         InicializaAFD(&minimo, nEstadosMin, t.s);
+         criaAutMin(&minimo,representante, &t);
+         EscreveAFDJFF(argv[2], &minimo);
+         /*
          1 -busca estados inacessiveis (busca em largura ou profundidade) -- feito.
          2 - remove estados inuteis.
          3 - identifica automatos identicos{ -- FEITO
