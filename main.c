@@ -8,53 +8,71 @@
 
 #include <stdio.h>
 #include "afd_util.c"
+#include<math.h>
 
 int ** matrizEquivalencia;
-
-
-void inicializaInacessiveis(tAFD * afd) {
-    int i;
-    for(i=0;i<afd->n; i++)
-        afd->inacessivel[i] = 1; //setta tudo como inacessiveis pra depois rodar a dfs
-}
 
 void imprime (tAFD * t){
     int i = 0;
     int j = 0;
     for (i = 0; i< t->n; i++){
         for (j = 0; j< t->s; j++) {
-            printf("Delta[%i][%i]: %i", i, j, t->Delta[i][j]);
+            printf("%i ", t->Delta[i][j]);
         }
         printf("\n");
     }
 }
 
-void buscaProfundidade(tAFD *afd, int i , int * visited){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
-    afd->inacessivel[i] = 0;
+void buscaProfundidade(tAFD *afd, int i , int * visited , int * inacessivel){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
+    inacessivel[i] = 0;
     int j;
     visited[i]=1;
     for(j=0;j<afd->s;j++)
-        if(afd->Delta[i][j] != -1 && visited[afd->Delta[i][j]] == 0){ // TA CRASHANDO NESSA EXATA LINHA existe a seta e n foi visitado ainda.
-            buscaProfundidade(afd, afd ->Delta[i][j], visited);
+        if(afd->Delta[i][j] != -1 && visited[afd->Delta[i][j]] == 0){
+            buscaProfundidade(afd, afd ->Delta[i][j], visited , inacessivel);
         }
 }
 
 
-void estadosInuteis() {
-    //ve os slides pra entender
-}
-
-void estadosInacessiveis(tAFD* afd) {
-    inicializaInacessiveis(afd);
-    int visited[afd->n];
+void estadosInacessiveis(tAFD* afd , int q0 , int * inacessivel) {
     int i = 0;
+    for(i=0;i<afd->n; i++)
+        inacessivel[i] = 1; //seta tudo como 1 pra depois rodar dfs
+    int visited[afd->n];
     for(i = 0 ; i < afd->n ; i++)
         visited[i] = 0;
-    buscaProfundidade(afd, afd->q0, visited);
-    int k;
-    for(k=0; k<afd->n; k++)
-        printf("\n%i - da posicao[%i]\n ", afd->inacessivel[k], k);
+    buscaProfundidade(afd,q0, visited , inacessivel);
+   // int k;
+ //   for(k=0; k<afd->n; k++)
+     //   printf("\n%i - da posicao[%i]\n ", afd->inacessivel[k], k);
 }
+void inicializaInacessivel(int * inacessivel, int tamanho){
+    int i ;
+    for(i = 0; i < tamanho ; i++)
+    inacessivel[i] = 1;
+}
+
+void estadosInuteis(tAFD * afd , int * inutil) {
+    int i , j;
+    inicializaInacessivel(inutil,afd->n);
+    int  inacessivel[afd->n];
+     for (i = 0; i< afd->n; i++){
+         estadosInacessiveis(afd , i , inacessivel);
+        for (j = 0; j< afd->n; j++) {
+            if(inacessivel[j] == 0 && afd->F[j] == 1){
+                //verifica se algum estado que chegou foi final. se foi td bem.
+                //chegou em final, entao n eh inutil.
+                inutil[i] = 0; //nao eh mais inutil.
+            }
+       }
+       inicializaInacessivel(inacessivel, afd->n);
+     }
+     for (i = 0; i< afd->n; i++)
+     printf("%i ",inutil[i]);
+    //imprime(&afd);
+}
+
+
 /*
  ANTIGO
  void estadosInacessiveis(tAFD *afd,int q0)
@@ -160,11 +178,12 @@ int * verificaRepresentante(tAFD *afd){
     }
     return representante;
 }
+
 int verificaNovosEstados(tAFD *afd , int * representante){
     int novoN = afd->n;
     int i , j;
     for (i =0; i < afd->n; i++) {
-        if(afd->inacessivel[i] == 1){
+        if(afd->inacessivel[i] == 1 || afd->inutil[i] == 1){
             novoN--;
         }
     }
@@ -196,11 +215,12 @@ void inicializaDeltaMin(tAFD* afd, tAFD *antigo, int* representante){
     int k2 = 0;
     for (i = 0;i < antigo->n ; i++) {
         for ( j = i + 1; j < antigo->n || i == antigo-> n-1; j++) { //nao preciso olhar para traz de i
-            if(i == antigo -> n-1 ){
+            if(i == antigo-> n-1 ){
                 equivalente[k2] = i ;
                 i++;
             }else{
-                if(representante[i] == representante[j]){
+                if(representante[i] == representante[j] 
+                && antigo->inacessivel[i] == 0 && antigo->inutil[i] == 0){
                     //MESMA CATEGORIA.
                     equivalente[k2] = i;
                     k2++;
@@ -216,7 +236,8 @@ void inicializaDeltaMin(tAFD* afd, tAFD *antigo, int* representante){
                     //categoria diferente.
                     equivalente[k2] = i;
                     k2++;
-                    for (int i1 = 0; i1 < afd->n; i1++) {
+                    int i1;
+                    for(i1 = 0; i1 < afd->n; i1++) {
                         printf("-- \n");
                         printf("%i", equivalente[i1]);
                     }
@@ -265,9 +286,9 @@ int main(int argc, const char * argv[]) {
     // insert code here...
     tAFD t;
     if(LeAFDTXT(argv[1], &t) == 1){
-        estadosInacessiveis(&t);
-        // imprime(&t);
-        /*estadosInacessiveis(&t, t.q0);
+        estadosInuteis(&t, t.inutil);
+         imprime(&t);
+         estadosInacessiveis(&t, t.q0 , t.inacessivel);
          matrizEquivalencia =  identificaIdenticos(&t);
          int * representante = verificaRepresentante(&t);
          tAFD minimo;

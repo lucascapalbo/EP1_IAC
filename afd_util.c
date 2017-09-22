@@ -23,7 +23,7 @@
 #define swap(type, i, j) {type vaux = i; i = j; j = vaux;}
 
 #include "afd_util.h"
-
+#include<math.h>
 
 
 /* ***********************************
@@ -87,7 +87,10 @@ void InicializaAFD(tAFD *aut, int n, int s) {
         aut->Delta[i] = (int*) calloc(s, sizeof(int));
     
     aut->inacessivel = (int*) calloc(n, sizeof(int));
-    for (i=0; i<n; i++) aut->inacessivel[i] = -1;
+    for (i=0; i<n; i++) aut->inacessivel[i] = 1;
+    
+    aut->inutil = (int*) calloc(n, sizeof(int));
+    for (i=0; i<n; i++) aut->inutil[i] = 1;
     
     for (i=0; i<n; i++)
         for (j=0; j<s; j++)
@@ -118,13 +121,13 @@ void LiberaAFD (tAFD *aut) {
  LeAFDTXT(nomearq, aut)
  Le o arquivo nomearq e armazena na estrutura aut
  Lay-out:
- A 1a linha deve conter o número de estados, numero de simbolos do alfabeto e indice do estado inicial.
+ A 1a linha deve conter o nï¿½mero de estados, numero de simbolos do alfabeto e indice do estado inicial.
  A 2a linha contem um vetor binario F:
  F[i] = 1 se estado i eh de aceitacao; F[i] = 0 caso contrario
  As proximas linhas contem os elementos da matriz de transicao:
  Delta[i][j] = estado ao qual o automato deve ir se estiver no estado i e ler o simbolo j
  Se nao houver transicao do estado i com o simbolo j, Delta[i][j] = -1
- Observações:
+ Observaï¿½ï¿½es:
  - Estados e simbolos sao indexados de 0 a n-1 e 0 a s-1
  - Em cada linha, os simbolos sao separados por espacos
  
