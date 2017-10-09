@@ -23,7 +23,7 @@ void imprime (tAFD * t){
     }
 }
 
-void buscaProfundidade(tAFD *afd, int i , int * visited , int * inacessivel){ //FAZ ESSE, OU POR LARGURA, VC QUEM ESCOLHE.
+void buscaProfundidade(tAFD *afd, int i , int * visited , int * inacessivel){
     inacessivel[i] = 0;
     int j;
     visited[i]=1;
@@ -32,24 +32,19 @@ void buscaProfundidade(tAFD *afd, int i , int * visited , int * inacessivel){ //
             buscaProfundidade(afd, afd ->Delta[i][j], visited , inacessivel);
 }
 
+void inicializaInacessivel(int * inacessivel, tAFD* afd){
+    int i;
+    for(i=0;i<afd->n; i++)
+        inacessivel[i] = 1; //setta tudo como 1 pra depois rodar dfs
+}
 
 void estadosInacessiveis(tAFD* afd , int q0 , int * inacessivel) {
-    int i = 0;
-    for(i=0;i<afd->n; i++)
-        inacessivel[i] = 1; //seta tudo como 1 pra depois rodar dfs
+    inicializaInacessivel(inacessivel, afd);
     int visited[afd->n];
     for(i = 0 ; i < afd->n ; i++)
         visited[i] = 0;
     buscaProfundidade(afd,q0, visited , inacessivel);
     
-    // int k;
-    //   for(k=0; k<afd->n; k++)
-    //   printf("\n%i - da posicao[%i]\n ", afd->inacessivel[k], k);
-}
-void inicializaInacessivel(int * inacessivel, int tamanho){
-    int i ;
-    for(i = 0; i < tamanho ; i++)
-        inacessivel[i] = 1;
 }
 
 void estadosInuteis(tAFD * afd , int * inutil) {
@@ -67,35 +62,8 @@ void estadosInuteis(tAFD * afd , int * inutil) {
         }
         inicializaInacessivel(inacessivel, afd->n);
     }
-    /*for (i = 0; i< afd->n; i++)
-     printf("%i ",inutil[i]);
-     */
-    //imprime(&afd);
 }
 
-
-/*
- ANTIGO
- void estadosInacessiveis(tAFD *afd,int q0)
- {
- int visitado[afd->n];
- visitado[q0] = 1; //estado inicial sempre eh visitado.
- int i , j;
- for (i = 0; i < afd->n; i++) {
- for (j = 0; j < afd->s; j++) {
- if(afd->Delta[i][j] != -1){
- visitado[afd->Delta[i][j]] = 1;
- }
- }
- }
- int z = 0;
- for (z = 0; z < afd->n; z++) {
- if(visitado[z] != 1){
- afd->inacessivel[z] = 1;
- }
- }
- }
- */
 void inicializaMatrizEquivalencia(int ** matrizEquivalencia, int * estados , tAFD * afd){
     int i , j;
     for (i = 0; i< afd->n; i++) {
@@ -127,8 +95,7 @@ void verificaTransicoes(int ** matrizEquivalencia , tAFD * afd){
         for (j = 0; j < afd->n; j++) {
             if(matrizEquivalencia[i][j] == 1){
                 for(z = 0; z < afd->s ; z++){
-                    if(afd->F[afd->Delta[i][z]] != afd->F[afd->Delta[j][z]])
-                        //destinos nao possuem mesmo estado
+                    if(afd->F[afd->Delta[i][z]] != afd->F[afd->Delta[j][z]])//destinos nao possuem mesmo estado
                         matrizEquivalencia[i][j] = 0;
                 }
             }
@@ -149,14 +116,14 @@ int** identificaIdenticos(tAFD *afd){
     inicializaMatrizEquivalencia(matrizEquivalencia, afd->F, afd); //se linha e coluna forem de mesmo estado, coloca 1. Usa F, que contem a categoria (aceitacao ou nao) de cada estado.
     verificaSimbolo(matrizEquivalencia, afd); //verifica se a linha e coluna, de onde possuem 1, estao definidos para os mesmos simbolos. (se nao possuem -1 em algum lugar).
     verificaTransicoes(matrizEquivalencia, afd);//verifica se a linha e coluna, que possuem 1, chegam em estados da mesma categoria.
-    // ################# SOH IMPRIME A MATRIZ PARA DEBUGAR #################################
+    // ################# SOH IMPRIME A MATRIZ PARA DEBUGGAR #################################
     for (i = 0; i< afd->n; i++) {
         for (j = 0; j < afd->s; j++) {
             printf("%i ", afd->Delta[i][j]);
         }
         printf("\n");
     }
-    // ################# SOH IMPRIME A MATRIZ PARA DEBUGAR #################################
+    // ################# SOH IMPRIME A MATRIZ PARA DEBUGGAR #################################
     return matrizEquivalencia;
 }
 
@@ -222,7 +189,7 @@ void trocaEstados(tAFD*afd, int estadoDestino , int estadoAntigo){
             if(afd->Delta[i][j] == estadoAntigo)
                 afd->Delta[i][j] = estadoDestino; //não vai mais pra ele, vai para o meu destino
             if(i != estadoAntigo){
-                novaMatriz[z][j] = afd->Delta[i][j]; //atribui matriz antiga a nova
+                novaMatriz[z][j] = afd->Delta[i][j]; //atribui matriz antiga a a nova
             }
         }
         z++;
@@ -245,7 +212,6 @@ void removeDoVetor(int* vetor , int tamanho, int estado){
     for (i2 =0; i2<tamanho + 1; i2++) {
         if(i2 != estado){
             novoVetor[z2] = vetor[i2];
-            // printf("%i | %i \n", novoVetor[z2],representante[i2]);
             z2++;
         }
     }
@@ -280,7 +246,6 @@ void removeInacessiveis(tAFD* afd){
     int jaEntrou = 0;
     for(i= 0;i< afd->n;i++){
         if(afd->inacessivel[i] == 1){ //  eh inutil, posso remover.
-            printf("inac: %i \n",i);
             novoN--;
             if(jaEntrou == 1)
                 removeEstados(afd,i - 1);
@@ -354,7 +319,6 @@ void criaAutMin(tAFD *afd , int * representante , tAFD *antigo){
     inicializaDeltaMin(afd, antigo, representante);
 }
 int main(int argc, const char * argv[]) {
-    // insert code here...
     tAFD t;
     if(LeAFDTXT(argv[1], &t) == 1){
         imprime(&t);
@@ -366,55 +330,9 @@ int main(int argc, const char * argv[]) {
         int * representante = verificaRepresentante(&t);
         tAFD minimo;
         int nEstadosMin = 0;
-        // nEstadosMin =  verificaNovosEstados(&t,representante);
         InicializaAFD(&minimo, nEstadosMin, t.s);
         criaAutMin(&minimo,representante, &t);
-        // imprime(&t);
         EscreveAFDJFF(argv[2], &t);
-        /*
-         1 -busca estados inacessiveis (busca em largura ou profundidade) -- feito.
-         2 - remove estados inuteis.
-         3 - identifica automatos identicos{ -- FEITO
-         - divide em subconjuntos ( aceitacao e nao aceitacao)
-         - verificar equivalencia dentro de cada conjunto{
-         PREENCHER MATRIZ BINARIA
-         inicializa a matriz da seguinte forma: se linha e coluna forem finais  ou iniciais, marca com 1
-         se nao marca com 0.
-         Para cada espaco 1 na matriz, verifica se a linha e a coluna possuem os mesmo simbolos definidos, deixa com 1. se nao, coloca 0.
-         verifica se as transicoes chegam em estados equivalentes.(se uma chega num estado final e a outra nao por exemplo).
-         }
-         }
-         4- identifica classe de equivalencia { -- FEITO
-         vetor, onde i é o representante da classe que ele pertence.
-         inicializa vetor com -1.
-         Criar contador, incrementa enquanto houver alguma posicao com classe -1.
-         REP[i] = CONTADOR - 1;
-         se houver algum estado equivalente ao i ( soh olhar na matriz binaria, e se tiver 1 tem), coloca mesmo Contador para ele.
-         }
-         5 - cria o automato minimo usando vetor de representante e a matriz de equivalencia (vou perguntar ao prof pois nao entendi direito)
-         
-         ######################### DEBUG #######################
-         int i = 0;
-         for (i = 0; i < t.n; i++){
-         if(t.inacessivel[i] == 1)
-         printf("Estado %i eh inacessivel \n",(i+1));
-         }
-         
-         -------------------
-         PRINTA REPRESENTANTE
-         printf("\n");
-         int i = 0;
-         for (i = 0 ; i < t.n; i++) {
-         printf("%i ",representante[i]);
-         }
-         
-         PRINTA NUMERO ESTADOS MINIMOS
-         
-         printf("%i",nEstadosMin );
-         
-         ######################### DEBUG #######################
-         */
-        //
     }
     return 0;
 }
