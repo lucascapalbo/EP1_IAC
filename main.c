@@ -203,7 +203,6 @@ void removeEstados(tAFD*afd, int estado){
             jaEntrou = 1;
         }
     }
-    free(afd->Delta);
     afd->Delta = novaMatriz;
 }
 
@@ -256,26 +255,39 @@ void removeDoVetor(int* vetor , int tamanho, int estado){
 void removeInuteis(tAFD* afd){
     int i = 0;
     int novoN = afd->n;
+    int jaEntrou = 0;
     for(i= 0;i< afd->n;i++){
         if(afd->inutil[i] == 1){ //  eh inutil, posso remover.
             printf("inutil: %i \n",i);
             novoN--;
-            removeEstados(afd,i);
+            if(jaEntrou == 1)
+                removeEstados(afd,i - 1);
+            else{
+                removeEstados(afd,i);
+                jaEntrou = 1;
+            }
+            afd->n= novoN;
+            imprime(afd);
             removeDoVetor(afd->F, novoN+ 1, i); //remove do vetor de estados
             removeDoVetor(afd->inutil, novoN+ 1, i); //remove do vetor de inuteis, pois sumiu do automato já.
         }
     }
-    afd->n= novoN;
 }
 
 void removeInacessiveis(tAFD* afd){
     int i = 0;
     int novoN = afd->n;
+    int jaEntrou = 0;
     for(i= 0;i< afd->n;i++){
         if(afd->inacessivel[i] == 1){ //  eh inutil, posso remover.
             printf("inac: %i \n",i);
             novoN--;
-            removeEstados(afd,i);
+            if(jaEntrou == 1)
+                removeEstados(afd,i - 1);
+            else{
+                removeEstados(afd,i);
+                jaEntrou = 1;
+            }
             removeDoVetor(afd->F, novoN+ 1, i); //remove do vetor de estados, pois sumiu do automato.
             removeDoVetor(afd->inacessivel, novoN+ 1, i);
         }
@@ -357,7 +369,7 @@ int main(int argc, const char * argv[]) {
         // nEstadosMin =  verificaNovosEstados(&t,representante);
         InicializaAFD(&minimo, nEstadosMin, t.s);
         criaAutMin(&minimo,representante, &t);
-        imprime(&t);
+        // imprime(&t);
         EscreveAFDJFF(argv[2], &t);
         /*
          1 -busca estados inacessiveis (busca em largura ou profundidade) -- feito.
