@@ -41,11 +41,8 @@ void estadosInacessiveis(tAFD* afd , int q0 , int * inacessivel) {
     for(i = 0 ; i < afd->n ; i++)
         visited[i] = 0;
     buscaProfundidade(afd,q0, visited , inacessivel);
-    
-    // int k;
-    //   for(k=0; k<afd->n; k++)
-    //   printf("\n%i - da posicao[%i]\n ", afd->inacessivel[k], k);
 }
+
 void inicializaInacessivel(int * inacessivel, int tamanho){
     int i ;
     for(i = 0; i < tamanho ; i++)
@@ -67,35 +64,8 @@ void estadosInuteis(tAFD * afd , int * inutil) {
         }
         inicializaInacessivel(inacessivel, afd->n);
     }
-    /*for (i = 0; i< afd->n; i++)
-     printf("%i ",inutil[i]);
-     */
-    //imprime(&afd);
 }
 
-
-/*
- ANTIGO
- void estadosInacessiveis(tAFD *afd,int q0)
- {
- int visitado[afd->n];
- visitado[q0] = 1; //estado inicial sempre eh visitado.
- int i , j;
- for (i = 0; i < afd->n; i++) {
- for (j = 0; j < afd->s; j++) {
- if(afd->Delta[i][j] != -1){
- visitado[afd->Delta[i][j]] = 1;
- }
- }
- }
- int z = 0;
- for (z = 0; z < afd->n; z++) {
- if(visitado[z] != 1){
- afd->inacessivel[z] = 1;
- }
- }
- }
- */
 void inicializaMatrizEquivalencia(int ** matrizEquivalencia, int * estados , tAFD * afd){
     int i , j;
     for (i = 0; i< afd->n; i++) {
@@ -149,27 +119,11 @@ int** identificaIdenticos(tAFD *afd){
     inicializaMatrizEquivalencia(matrizEquivalencia, afd->F, afd); //se linha e coluna forem de mesmo estado, coloca 1. Usa F, que contem a categoria (aceitacao ou nao) de cada estado.
     verificaSimbolo(matrizEquivalencia, afd); //verifica se a linha e coluna, de onde possuem 1, estao definidos para os mesmos simbolos. (se nao possuem -1 em algum lugar).
     verificaTransicoes(matrizEquivalencia, afd);//verifica se a linha e coluna, que possuem 1, chegam em estados da mesma categoria.
-    // ################# SOH IMPRIME A MATRIZ PARA DEBUGAR #################################
-    for (i = 0; i< afd->n; i++) {
-        for (j = 0; j < afd->s; j++) {
-            printf("%i ", afd->Delta[i][j]);
-        }
-        printf("\n");
-    }
-    // ################# SOH IMPRIME A MATRIZ PARA DEBUGAR #################################
     return matrizEquivalencia;
 }
 
 int * verificaRepresentante(tAFD *afd){
-        int i , j ;
-    for (i = 0; i< afd->n; i++) {
-        for (j = 0; j < afd->s; j++) {
-            printf("%i ", matrizEquivalencia[i][j]);
-        }
-        printf("\n");
-    }
-    
-    
+    int i , j ;
     int * representante = (int*) calloc(afd->n, sizeof(int));
     for (i=0; i<afd->n; i++) representante[i] = -1;
     int contador = 0; //contador que representa a classe.
@@ -196,6 +150,7 @@ void removeEstados(tAFD*afd, int estado){
     int ** novaMatriz = (int**) calloc(afd->n - 1, sizeof(int*));
     for (z=0;z<afd->n; z++)
         novaMatriz [z]= (int*) calloc(afd->n - 1, sizeof(int));
+    
     z=0;
     for(i= 0;i< afd->n;i++){
         for(j= 0;j< afd->s;j++){
@@ -244,57 +199,52 @@ void trocaEstados(tAFD*afd, int estadoDestino , int estadoAntigo){
     }
     afd->n--;
     afd->Delta = novaMatriz;
-    imprime(afd); //debug
 }
 
 void removeDoVetor(int* vetor , int tamanho, int estado){
     //remove do vetor o estado que quer.
-    int i = 0;
     int i2 = 0;
     int z2 = 0;
     int *novoVetor = (int*) calloc(tamanho-1, sizeof(int));
-    for (i2 =0; i2<tamanho; i2++) {
+    for (i2 =0; i2<tamanho + 1; i2++) {
         if(i2 != estado){
             novoVetor[z2] = vetor[i2];
-            // printf("%i | %i \n", novoVetor[z2],representante[i2]);
             z2++;
         }
-        
     }
     vetor = novoVetor;
-    for (i = 0; i < tamanho ; i++)
-    printf("%i | novo: %i \n", vetor[i], novoVetor[i]);
-    printf("--------------\n");
 }
 
+void removeDoF(tAFD * afd,int tamanho, int estado){
+    //remove do vetor o estado que quer.
+    int i2 = 0;
+    int z2 = 0;
+    int *novoVetor = (int*) calloc(tamanho-1, sizeof(int));
+    for (i2 =0; i2<tamanho + 1; i2++) {
+        if(i2 != estado){
+            novoVetor[z2] = afd->F[i2];
+            z2++;
+        }
+    }
+    afd->F = novoVetor;
+}
 void removeInuteis(tAFD* afd){
     int i = 0;
     int j = 0;
-     int jaEntrou1 = 0;
-    int jaEntrou2 = 0;
     int novoN = afd->n;
+    int jaEntrou = 0;
     for(i= 0;i< afd->n;i++){
         if(afd->inutil[i] == 1){ //  eh inutil, posso remover.
-            printf("inutile: %i \n", i ); // se ele entra nesse if aqui, ele vai acabar caindo aqui
-            novoN--;                                                    //                |
-            if(jaEntrou1 == 1)                                           //                |
-                removeEstados(afd,i - 1);                               //                |
-            else { // <<<<---------------------------------------------------------------/
+            novoN--;
+            if(jaEntrou == 1)
+                removeEstados(afd,i - 1);
+            else{
                 removeEstados(afd,i);
-                jaEntrou1 = 1; // e o jaEntrou eh settado como 1
-                
+                jaEntrou = 1;
             }
             afd->n= novoN;
-            imprime(afd);
-            if(jaEntrou2 == 1){
-                removeDoVetor(afd->F, novoN +1, i-1); //remove do vetor de estados
-                // removeDoVetor(afd->inutil, novoN + 1, i-1); //remove do vetor de inuteis, pois sumiu do automato já.
-                } else { //explica pq n entra nesse else, please
-                 //printf("nice");
-                 removeDoVetor(afd->F, novoN+1, i); //remove do vetor de estados
-                 //removeDoVetor(afd->inutil, novoN+1, i); //remove do vetor de inuteis, pois sumiu do automato já.
-                 jaEntrou2 = 1;
-                 }
+            removeDoF(afd, novoN+ 1, i); //remove do vetor de estados
+            removeDoVetor(afd->inutil, novoN+ 1, i); //remove do vetor de inuteis, pois sumiu do automato já.
         }
     }
 }
@@ -305,7 +255,6 @@ void removeInacessiveis(tAFD* afd){
     int jaEntrou = 0;
     for(i= 0;i< afd->n;i++){
         if(afd->inacessivel[i] == 1){ //  eh inutil, posso remover.
-            printf("inac: %i \n",i);
             novoN--;
             if(jaEntrou == 1)
                 removeEstados(afd,i - 1);
@@ -313,7 +262,7 @@ void removeInacessiveis(tAFD* afd){
                 removeEstados(afd,i);
                 jaEntrou = 1;
             }
-            removeDoVetor(afd->F, novoN+ 1, i); //remove do vetor de estados, pois sumiu do automato.
+            removeDoF(afd, novoN+ 1, i); //remove do vetor de estados, pois sumiu do automato.
             removeDoVetor(afd->inacessivel, novoN+ 1, i);
         }
     }
@@ -326,12 +275,10 @@ void inicializaF(tAFD *afd , tAFD *antigo , int * equivalente){
         afd->F[i] = antigo->F[equivalente[i]];
     }
 }
-void inicializaDeltaMin(tAFD* afd, tAFD *antigo, int* representante){
+void inicializaDeltaMin(tAFD *antigo, int* representante){
     //quando o representante for igual, retira os vertices mais pra frente de mesma categoria
     // e depois coloca as arestas que chegam e saem dele pro igual.
     int i, j ,z;
-    for (i = 0; i< antigo->n; i++)
-        printf("Representante: %i \n", representante[i]);
     int copiaRep[antigo->n];
     for (i = 0; i< antigo->n; i++)
         copiaRep[i] = representante[i];
@@ -348,54 +295,35 @@ void inicializaDeltaMin(tAFD* afd, tAFD *antigo, int* representante){
                 for (i2 =0; i2<antigo->n + 1; i2++) {
                     if(i2 != j){
                         novoVetor[z2] = representante[i2];
-                        printf("%i | %i \n", novoVetor[z2],representante[i2]);
+                        // printf("%i | %i \n", novoVetor[z2],representante[i2]);
                         z2++;
                     }
                 }
                 representante = novoVetor;
-                for (z = 0; z< antigo->n; z++)
-                    printf("Representante: %i \n", representante[z]);
                 j--;
             }
         }
     }
     for (i = 0; i < antigo->n; i++) {
         for (j = 0; j < antigo->s; j++) {
-            if(antigo->Delta[i][j] > antigo->n)
+            if(antigo->Delta[i][j] > antigo->n){//troca pelo seu representante.
                 antigo->Delta[i][j] = copiaRep[antigo->Delta[i][j]];
+            }
         }
     }
-    imprime(antigo);
 }
-/*######################### DEBUG #######################
- PRINTA VETOR EQUIVALENTE
- for (i = 0; i< afd->n; i++)
- printf("%i", equivalente[i]);
- 
- ######################### DEBUG ####################### */
 
-void criaAutMin(tAFD *afd , int * representante , tAFD *antigo){
-    //ja esta tudo inicializado, basta preencher delta, estados F de aceitacao e inicial. ignorando os inacessiveis, inuteis e equivalentes.
-    inicializaDeltaMin(afd, antigo, representante);
-}
 int main(int argc, const char * argv[]) {
-    // insert code here...
     tAFD t;
     if(LeAFDTXT(argv[1], &t) == 1){
-        imprime(&t);
         estadosInacessiveis(&t, t.q0 , t.inacessivel);
         removeInacessiveis(&t);
         estadosInuteis(&t, t.inutil);
         removeInuteis(&t);
         matrizEquivalencia =  identificaIdenticos(&t);
         int * representante = verificaRepresentante(&t);
-        tAFD minimo;
-        int nEstadosMin = 0;
-        // nEstadosMin =  verificaNovosEstados(&t,representante);
-        InicializaAFD(&minimo, nEstadosMin, t.s);
-        criaAutMin(&minimo,representante, &t);
-        // imprime(&t);
-        EscreveAFDJFF(argv[2], &t);
+        inicializaDeltaMin(&t,representante);
+        EscreveAFDTXT(argv[2], &t);
         /*
          1 -busca estados inacessiveis (busca em largura ou profundidade) -- feito.
          2 - remove estados inuteis.
@@ -417,29 +345,7 @@ int main(int argc, const char * argv[]) {
          se houver algum estado equivalente ao i ( soh olhar na matriz binaria, e se tiver 1 tem), coloca mesmo Contador para ele.
          }
          5 - cria o automato minimo usando vetor de representante e a matriz de equivalencia (vou perguntar ao prof pois nao entendi direito)
-         
-         ######################### DEBUG #######################
-         int i = 0;
-         for (i = 0; i < t.n; i++){
-         if(t.inacessivel[i] == 1)
-         printf("Estado %i eh inacessivel \n",(i+1));
-         }
-         
-         -------------------
-         PRINTA REPRESENTANTE
-         printf("\n");
-         int i = 0;
-         for (i = 0 ; i < t.n; i++) {
-         printf("%i ",representante[i]);
-         }
-         
-         PRINTA NUMERO ESTADOS MINIMOS
-         
-         printf("%i",nEstadosMin );
-         
-         ######################### DEBUG #######################
          */
-        //
     }
     return 0;
 }
