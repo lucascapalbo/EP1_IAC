@@ -161,7 +161,15 @@ int** identificaIdenticos(tAFD *afd){
 }
 
 int * verificaRepresentante(tAFD *afd){
-    int i , j ;
+        int i , j ;
+    for (i = 0; i< afd->n; i++) {
+        for (j = 0; j < afd->s; j++) {
+            printf("%i ", matrizEquivalencia[i][j]);
+        }
+        printf("\n");
+    }
+    
+    
     int * representante = (int*) calloc(afd->n, sizeof(int));
     for (i=0; i<afd->n; i++) representante[i] = -1;
     int contador = 0; //contador que representa a classe.
@@ -188,12 +196,13 @@ void removeEstados(tAFD*afd, int estado){
     int ** novaMatriz = (int**) calloc(afd->n - 1, sizeof(int*));
     for (z=0;z<afd->n; z++)
         novaMatriz [z]= (int*) calloc(afd->n - 1, sizeof(int));
-    
     z=0;
     for(i= 0;i< afd->n;i++){
         for(j= 0;j< afd->s;j++){
             if(afd->Delta[i][j] == estado)
                 afd->Delta[i][j] = -1; //não vai mais pra ele.
+            if(afd->Delta[i][j] > estado) //se for maior faz voltar uma posição para não perder o número de estados.
+                afd->Delta[i][j]--;
             if(i != estado)
                 novaMatriz[z][j] = afd->Delta[i][j]; //atribui antiga matriz a nova
         }
@@ -221,6 +230,8 @@ void trocaEstados(tAFD*afd, int estadoDestino , int estadoAntigo){
         for(j= 0;j< afd->s;j++){
             if(afd->Delta[i][j] == estadoAntigo)
                 afd->Delta[i][j] = estadoDestino; //não vai mais pra ele, vai para o meu destino
+            if(afd->Delta[i][j] > estadoAntigo) //se for maior faz voltar uma posição para não perder o número de estados.
+                afd->Delta[i][j]--;
             if(i != estadoAntigo){
                 novaMatriz[z][j] = afd->Delta[i][j]; //atribui matriz antiga a nova
             }
@@ -231,7 +242,6 @@ void trocaEstados(tAFD*afd, int estadoDestino , int estadoAntigo){
             jaEntrou = 1;
         }
     }
-    free(afd->Delta);
     afd->n--;
     afd->Delta = novaMatriz;
     imprime(afd); //debug
@@ -239,37 +249,52 @@ void trocaEstados(tAFD*afd, int estadoDestino , int estadoAntigo){
 
 void removeDoVetor(int* vetor , int tamanho, int estado){
     //remove do vetor o estado que quer.
+    int i = 0;
     int i2 = 0;
     int z2 = 0;
     int *novoVetor = (int*) calloc(tamanho-1, sizeof(int));
-    for (i2 =0; i2<tamanho + 1; i2++) {
+    for (i2 =0; i2<tamanho; i2++) {
         if(i2 != estado){
             novoVetor[z2] = vetor[i2];
             // printf("%i | %i \n", novoVetor[z2],representante[i2]);
             z2++;
         }
+        
     }
     vetor = novoVetor;
+    for (i = 0; i < tamanho ; i++)
+    printf("%i | novo: %i \n", vetor[i], novoVetor[i]);
+    printf("--------------\n");
 }
 
 void removeInuteis(tAFD* afd){
     int i = 0;
+    int j = 0;
+     int jaEntrou1 = 0;
+    int jaEntrou2 = 0;
     int novoN = afd->n;
-    int jaEntrou = 0;
     for(i= 0;i< afd->n;i++){
         if(afd->inutil[i] == 1){ //  eh inutil, posso remover.
-            printf("inutil: %i \n",i);
-            novoN--;
-            if(jaEntrou == 1)
-                removeEstados(afd,i - 1);
-            else{
+            printf("inutile: %i \n", i ); // se ele entra nesse if aqui, ele vai acabar caindo aqui
+            novoN--;                                                    //                |
+            if(jaEntrou1 == 1)                                           //                |
+                removeEstados(afd,i - 1);                               //                |
+            else { // <<<<---------------------------------------------------------------/
                 removeEstados(afd,i);
-                jaEntrou = 1;
+                jaEntrou1 = 1; // e o jaEntrou eh settado como 1
+                
             }
             afd->n= novoN;
             imprime(afd);
-            removeDoVetor(afd->F, novoN+ 1, i); //remove do vetor de estados
-            removeDoVetor(afd->inutil, novoN+ 1, i); //remove do vetor de inuteis, pois sumiu do automato já.
+            if(jaEntrou2 == 1){
+                removeDoVetor(afd->F, novoN +1, i-1); //remove do vetor de estados
+                // removeDoVetor(afd->inutil, novoN + 1, i-1); //remove do vetor de inuteis, pois sumiu do automato já.
+                } else { //explica pq n entra nesse else, please
+                 //printf("nice");
+                 removeDoVetor(afd->F, novoN+1, i); //remove do vetor de estados
+                 //removeDoVetor(afd->inutil, novoN+1, i); //remove do vetor de inuteis, pois sumiu do automato já.
+                 jaEntrou2 = 1;
+                 }
         }
     }
 }
